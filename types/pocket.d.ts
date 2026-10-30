@@ -1804,6 +1804,10 @@ export interface Reply {
      * @experimental
      */
     readonly conversationId: number;
+    /** The source message kind, when invoked from a message action. */
+    readonly kind?: "user" | "assistant";
+    /** A selected source substring, when the message menu carries a selection. */
+    readonly selectedText?: string;
 }
 
 /**
@@ -2628,6 +2632,12 @@ export interface Pocket {
      */
     replyAction(spec: ReplyActionSpec): Added<ReplyActionSpec>;
     /**
+     * Adds an action to the native menu for a person's message or an assistant reply.
+     * @since 0.26.0
+     * @experimental
+     */
+    messageAction(spec: ReplyActionSpec): Added<ReplyActionSpec>;
+    /**
      * Adds chips under the titles of rows in the session list.
      * @since 0.20.0
      * @experimental
@@ -2663,6 +2673,19 @@ export interface Pocket {
      * @experimental
      */
     insertText(text: string, options?: { inline?: boolean }): void;
+    /**
+     * Adds a reviewed, conversation-scoped quote draft. Never submits a message.
+     * @since 0.26.0
+     * @experimental
+     */
+    addAnnotation(note: {
+        id: string;
+        conversationId: number;
+        source: { kind: "file" | "message"; path?: string; messageId?: string; range?: unknown };
+        snapshot: string;
+        comment: string;
+        sendText: string;
+    }): void;
     /**
      * Gives text to the person's PiP, their assistant.
      * @since 0.26.0

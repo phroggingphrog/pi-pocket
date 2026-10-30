@@ -100,6 +100,7 @@ test("the example extensions load as drop-ins, off until the owner turns them on
     assert.deepEqual(
         listed.map((module) => [module.file, module.enabled]),
         [
+            ["cache-diagnostics.ts", false],
             ["clock.ts", false],
             ["my-words.ts", false],
             ["no-force-push.ts", false],

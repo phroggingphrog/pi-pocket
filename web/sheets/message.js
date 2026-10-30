@@ -23,6 +23,7 @@ import {
     writtenText,
 } from "../ui.js";
 import { memoryAvailable } from "./memory.js";
+import { messageActionItems } from "../extension-ui.js";
 
 /** The message to Pi a reply answers: the newest one before it. */
 function promptBefore(entryId) {
@@ -128,7 +129,7 @@ function SendAgain({ prompt, worktree }) {
 }
 
 /** What can be done with one message: fork from it, edit it, send it again, or copy it. */
-export function MessageSheet({ entryId }) {
+export function MessageSheet({ entryId, selectedText }) {
     const { view } = store.state;
     const entry =
         view.entries.get(entryId) ?? store.state.history?.find((each) => each.id === entryId);
@@ -213,6 +214,20 @@ export function MessageSheet({ entryId }) {
                     () => openSheet({ type: "memory", draft: lessonFrom(text) }),
                     "keep it as a lesson for Pi",
                 )
+            }
+            ${
+                canSteer() &&
+                !filesAlone &&
+                messageActionItems({
+                    id: String(entry.id),
+                    text,
+                    kind: entry.kind,
+                    conversationId: store.state.conversationId,
+                    selectedText:
+                        typeof selectedText === "string" && text.includes(selectedText)
+                            ? selectedText
+                            : undefined,
+                })
             }
             ${!filesAlone && item("Copy text", copy)}
         </div>

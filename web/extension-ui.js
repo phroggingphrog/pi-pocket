@@ -5,6 +5,7 @@
 // What it added goes when it reloads or is turned off; one that fails says why, and the app goes on without it. A tab
 // opened with `?noext=1` loads none of them (safe mode), for as long as the tab stays open.
 import { Component, Fragment, h, options } from "preact";
+import { loadAnnotations, saveAnnotations, validateAnnotation } from "./annotation-drafts.js";
 import {
     useCallback,
     useEffect,
@@ -70,6 +71,7 @@ const KINDS = [
     "topbar",
     "composerButton",
     "replyAction",
+    "messageAction",
     "sessionChips",
     "sessionAction",
     "sessionFilter",
@@ -736,7 +738,11 @@ function check(kind, spec) {
     }
 
     // An action under an answer gets the answer: its run as an argument, its sheet as `reply`.
-    if (kind === "replyAction" && spec.run === undefined && spec.sheet === undefined) {
+    if (
+        ["replyAction", "messageAction"].includes(kind) &&
+        spec.run === undefined &&
+        spec.sheet === undefined
+    ) {
         throw new Error(`${name} ${spec.id}: it does run or sheet, which get the answer`);
     }
 
@@ -1132,6 +1138,7 @@ function pocketFor(record) {
         topbar: (spec) => add("topbar", spec),
         composerButton: (spec) => add("composerButton", spec),
         replyAction: (spec) => add("replyAction", spec),
+        messageAction: (spec) => add("messageAction", spec),
         sessionChips: (spec) => add("sessionChips", spec),
         sessionAction: (spec) => add("sessionAction", spec),
         sessionFilter: (spec) => add("sessionFilter", spec),
@@ -1148,6 +1155,26 @@ function pocketFor(record) {
             if (live() && store.state.conversationId !== null) {
                 insertIntoComposer(text, [], { inline: options?.inline === true });
             }
+        },
+        addAnnotation(note) {
+            tick(record);
+
+            if (!live() || !canSteer() || note?.conversationId !== store.state.conversationId) {
+                throw new Error("Open the annotation's conversation before adding it.");
+            }
+
+            const checked = validateAnnotation(note);
+            const person = store.state.me?.id;
+            const notes = loadAnnotations(localStorage, person, checked.conversationId);
+
+            saveAnnotations(localStorage, person, checked.conversationId, [
+                ...notes.filter((each) => each.id !== checked.id),
+                checked,
+            ]);
+            store.set({
+                annotationRevision: (store.state.annotationRevision ?? 0) + 1,
+                sheet: null,
+            });
         },
         pip: Object.freeze({
             /** Give PiP text as the person's message: in its box to review, or sent after a tap (`askPipFrom`). */
@@ -2279,6 +2306,22 @@ function replyItems() {
             </button>`;
         },
     }));
+}
+
+/** Native message-menu actions receive a snapshot, not access to transcript internals. */
+export function messageActionItems(message) {
+    const reply = Object.freeze({ ...message });
+
+    return added("messageAction").map(
+        ({ record, spec }) => html`<button
+        class="sheet-item ext-message-action"
+        data-module=${record.module}
+        onClick=${() =>
+            spec.sheet === undefined
+                ? activate(record, spec, reply)
+                : activate(record, spec, { reply })}
+    >${spec.label}</button>`,
+    );
 }
 
 const sources = {

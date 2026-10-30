@@ -2,6 +2,12 @@
 // what was sent before (↑, Ctrl+R), fold long pastes, pick the model, stop.
 import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import { Avatar } from "./avatar.js";
+import {
+    annotationMessage,
+    loadAnnotations,
+    remainingAnnotations,
+    saveAnnotations,
+} from "./annotation-drafts.js";
 import { boxKey, keyBox } from "./box-keys.js";
 import { chatUnread, TypingLine } from "./chat.js";
 import {
@@ -378,6 +384,35 @@ export function Composer() {
     const historyScope = { person: store.state.me?.id, conversation: conversationId };
     const [text, setText] = useState(() => drafts.get(conversationId));
     const [files, setFiles] = useState([]);
+    const [annotations, setAnnotations] = useState(() =>
+        loadAnnotations(localStorage, store.state.me?.id, conversationId),
+    );
+
+    useEffect(() => {
+        setAnnotations(loadAnnotations(localStorage, store.state.me?.id, conversationId));
+    }, [conversationId, store.state.me?.id, store.state.annotationRevision]);
+
+    useEffect(() => {
+        const changed = (event) => {
+            if (event.storageArea === localStorage) {
+                setAnnotations(loadAnnotations(localStorage, store.state.me?.id, conversationId));
+            }
+        };
+
+        addEventListener("storage", changed);
+
+        return () => removeEventListener("storage", changed);
+    }, [conversationId, store.state.me?.id]);
+
+    const removeAnnotation = (id) => {
+        const next = loadAnnotations(localStorage, store.state.me?.id, conversationId).filter(
+            (note) => note.id !== id,
+        );
+
+        saveAnnotations(localStorage, store.state.me?.id, conversationId, next);
+        setAnnotations(next);
+    };
+
     // How a message goes while Pi works: "steer", "followUp" (Queue), or "interrupt" (stop the run, then send).
     const [sendMode, setSendMode] = useState("steer");
     // The queued message tapped open, wrapped: one line each until then. The queue holds only a message's start.
@@ -689,12 +724,14 @@ export function Composer() {
     };
 
     // Something in the box: on a phone while Pi works, Send takes the mic's place (style.css).
-    const filled = text.trim() !== "" || files.length > 0;
+    const filled = text.trim() !== "" || files.length > 0 || annotations.length > 0;
     const uploading = files.some((file) => file.state === "uploading");
     const canSend =
         !sending &&
         !uploading &&
-        (text.trim() !== "" || files.some((file) => file.state === "done"));
+        (text.trim() !== "" ||
+            annotations.length > 0 ||
+            files.some((file) => file.state === "done"));
 
     /** What went out stays for ↑; its pastes are done with. */
     const sent = (full) => {
@@ -744,7 +781,18 @@ export function Composer() {
 
         // What shows is what goes: words still coming would land in the emptied box.
         dictation.stop(true);
-        const full = expandPastes(text, pastes);
+        const sentPerson = store.state.me?.id;
+        const sentAnnotations = loadAnnotations(localStorage, sentPerson, conversationId);
+        const full = annotationMessage(expandPastes(text, pastes), sentAnnotations);
+
+        if (sentAnnotations.length && (parsed || shell)) {
+            notify(
+                "error",
+                "Send annotations as a conversation message, not a slash or shell command.",
+            );
+
+            return;
+        }
 
         if (parsed) {
             if (full.length <= REMEMBER_CHARS) {
@@ -779,7 +827,23 @@ export function Composer() {
                 setSendMode("steer");
             }
 
+            const remaining = remainingAnnotations(
+                loadAnnotations(localStorage, sentPerson, conversationId),
+                sentAnnotations,
+            );
+
+            setAnnotations(remaining);
             sent(full);
+
+            try {
+                saveAnnotations(localStorage, sentPerson, conversationId, remaining);
+            } catch {
+                notify(
+                    "error",
+                    "Message sent, but saved annotation drafts could not be cleared. Check drafts before sending again.",
+                );
+            }
+
             forget(files);
             setFiles([]);
 
@@ -1395,6 +1459,20 @@ export function Composer() {
                         addFiles([...(event.dataTransfer?.files ?? [])]);
                     }}
                 >
+                    ${
+                        annotations.length > 0 &&
+                        html`<div class="annotation-drafts" aria-label="Annotation drafts">
+                        ${annotations.map(
+                            (note) => html`<details class="annotation-draft" key=${note.id}>
+                            <summary>${note.source.kind === "file" ? note.source.path : "Message selection"} · ${note.comment || "Annotation"}</summary>
+                            <blockquote>${note.snapshot}</blockquote>
+                            <p>${note.comment}</p>
+                            <button type="button" class="button" onClick=${() => removeAnnotation(note.id)}>Remove annotation</button>
+                        </details>`,
+                        )}
+                        <p class="muted small">These quotes go with your next message. Nothing is sent yet.</p>
+                    </div>`
+                    }
                     ${
                         files.length > 0 &&
                         html`<div class="files">
