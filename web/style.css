@@ -18610,6 +18610,7 @@ pre.gallery-code {
     min-height: 44px;
     background: var(--card);
     border: 1px solid var(--accent);
+}
 
 .quote-reply-button {
     position: fixed;
