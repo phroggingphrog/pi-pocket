@@ -890,7 +890,7 @@ test(
     async () => {
         const manifest = `<script type="application/json" id="pocket-tweaks">[{"name":"--pad","type":"range","value":16,"unit":"px"}]</script>`;
         const content = page(
-            ":root{--pad:16px}a.btn{display:inline-block;padding:var(--pad);color:#1c1e26;background:#fff}a.btn:hover{color:#bbb}",
+            ":root{--pad:16px}body{padding:16px}a.btn{display:inline-block;padding:var(--pad);color:#1c1e26;background:#fff}a.btn:hover{color:#bbb}",
             `<a class="btn" href="#" data-pid="btn">Go</a><a href="about.html" data-pid="about">About</a>${manifest}`,
         );
         const plain = await check(content);
