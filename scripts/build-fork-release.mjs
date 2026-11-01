@@ -1,7 +1,8 @@
 import { createHash } from "node:crypto";
-import { execFileSync } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import {
     copyFileSync,
+    createWriteStream,
     mkdirSync,
     mkdtempSync,
     readFileSync,
@@ -10,8 +11,9 @@ import {
     statSync,
     writeFileSync,
 } from "node:fs";
+import { pipeline } from "node:stream/promises";
 import { basename, join, resolve } from "node:path";
-import { gzipSync } from "node:zlib";
+import { createGzip } from "node:zlib";
 
 const tag = process.env.RELEASE_TAG;
 const commit = process.env.RELEASE_REVISION;
@@ -37,13 +39,19 @@ if (execFileSync("git", ["status", "--porcelain"], { encoding: "utf8" }).trim())
 }
 
 mkdirSync(output, { recursive: true });
-const archive = gzipSync(
-    execFileSync("git", ["archive", "--format=tar", `--prefix=pi-pocket-${tag}/`, commit]),
-    { level: 9, mtime: 0 },
-);
 const sourceName = `pi-pocket-${tag}-source.tar.gz`;
+const sourcePath = join(output, sourceName);
+const archiveProcess = execFile(
+    "git",
+    ["archive", "--format=tar", `--prefix=pi-pocket-${tag}/`, commit],
+    { maxBuffer: 64 * 1024 * 1024 },
+);
+const gzip = createGzip({ level: 9, mtime: 0 });
 
-writeFileSync(join(output, sourceName), archive);
+await pipeline(archiveProcess.stdout, gzip, createWriteStream(sourcePath));
+
+if (archiveProcess.exitCode !== 0) {throw new Error("Could not build the source archive.");}
+
 const packRoot = mkdtempSync(join(output, ".pack-"));
 const sourceDirectory = mkdtempSync(join(output, ".source-"));
 
