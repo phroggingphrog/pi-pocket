@@ -76,6 +76,8 @@ export const SIDEBAR = [
             ["docs/features.md", "Features"],
             ["docs/releases.md", "Releases and betas"],
             ["docs/release-notes.md", "Release notes"],
+            ["docs/fork-releases.md", "Manual owner-fork releases"],
+            ["docs/foreman-pilot.md", "Foreman pilot"],
         ],
     },
 ];
