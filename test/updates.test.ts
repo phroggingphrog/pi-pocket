@@ -46,6 +46,14 @@ import { installsByItself } from "../src/server/extensions/updates.ts";
 
 const root = mkdtempSync(join(tmpdir(), "pi-pocket-updates-"));
 
+// Isolate npm 11 policy from the developer's user-level allowScripts setting.
+const npmrc = join(root, "npmrc");
+
+writeFileSync(npmrc, "");
+process.env.npm_config_userconfig = npmrc;
+delete process.env.npm_config_allow_scripts;
+process.env.npm_config_ignore_scripts = "true";
+
 after(() => rmSync(root, { recursive: true, force: true }));
 
 let made = 0;
@@ -62,6 +70,9 @@ const run = (cwd: string, args: string[]) =>
             GIT_COMMITTER_EMAIL: "test@example.com",
             GIT_CONFIG_NOSYSTEM: "1",
             HOME: root,
+            npm_config_userconfig: npmrc,
+            npm_config_allow_scripts: "",
+            npm_config_ignore_scripts: "true",
         },
     }).trim();
 
@@ -602,7 +613,7 @@ test("git refusing to move the checkout ends the update cleanly, packages back a
         }),
         /failed/,
     );
-    rmSync(lock);
+    rmSync(lock, { force: true });
     assert.equal(run(app, ["rev-parse", "HEAD"]), first);
     assert.equal(readFileSync(join(app, "node_modules", "old.txt"), "utf8").length > 0, true);
     assert.equal(readPending(app), undefined);
@@ -831,7 +842,7 @@ test("a lock git left behind ends the update with words for the owner, rather th
     assert.match(said, /Fix the checkout by hand/);
     assert.equal(readPending(app), undefined);
     assert.equal(rollBackUpdate(app), undefined);
-    rmSync(join(app, ".git", "index.lock"));
+    rmSync(join(app, ".git", "index.lock"), { force: true });
 });
 
 test("a server that starts on an update stopped part way puts it back, without reloads, and restarts", async () => {

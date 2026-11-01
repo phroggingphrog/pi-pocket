@@ -344,6 +344,8 @@ export type ModelRequestShaper = (payload: unknown, model: Model<Api>) => unknow
 export interface PocketHost {
     readonly guard: LancetGuard;
     readonly approvals: Approvals;
+    durableHarness(): import("@earendil-works/pi-durable").Harness;
+    defaultExtensionNames(): readonly string[];
     readonly agentDir: string;
     readonly dataDir: string;
     /** The running server's Pi Pocket package version, not the extension API level. */
