@@ -73,10 +73,10 @@ function find(store: TaskStore, id: string): Task {
     return task;
 }
 
-export const TasksGuide = section(
-    "pocket-tasks-guide",
-    () =>
-        "Use task_list to view tasks. Use task_add to create one, task_edit to change its details, and task_status to change its status. The task manager stores data in Pi Pocket.",
+export const TasksGuide = section("pocket-tasks-guide", ({ agent }) =>
+    agent.tools.some((tool) => tool.name.startsWith("task_"))
+        ? "Use task_list, task_add, task_edit, task_status, and task_show for session tasks. Data stays in Pi Pocket."
+        : undefined,
 );
 
 export function makeTaskTools() {

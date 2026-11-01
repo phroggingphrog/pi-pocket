@@ -46,6 +46,11 @@ const DEFERRED: Record<string, { use: string; section?: string; note?: string }>
         note: DESIGN_NOTE,
     },
     ask_someone: { use: "draft a question for someone outside this chat" },
+    task_list: { use: "list tasks" },
+    task_add: { use: "add task" },
+    task_edit: { use: "edit task" },
+    task_status: { use: "change status" },
+    task_show: { use: "show task" },
 };
 
 const sections = new Map<string, string[]>();
