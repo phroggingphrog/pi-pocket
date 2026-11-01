@@ -31,7 +31,7 @@ import type { Extension, Registry } from "@earendil-works/pi-durable";
 import { describe } from "./errors.ts";
 import { documentImports } from "./extension-document-imports.ts";
 import { ExtensionWebs, OLDEST_POCKET_API, POCKET_API } from "./extension-web.ts";
-import type { ExtensionModule, PocketHost, WebAccess } from "./host.ts";
+import type { ExtensionModule, ExtensionWeb, PocketHost, WebAccess } from "./host.ts";
 
 /**
  * How long a module may take to load (its import, and an async default export) before its load fails. At the server's
@@ -65,6 +65,7 @@ const ORDER = [
     "updates.ts",
     "design.ts",
     "tool-search.ts",
+    "foreman.ts",
 ];
 
 /** The built-in modules' names (their files' without `.ts`): a drop-in with one of them is never loaded. */
@@ -80,6 +81,7 @@ const OFF_BY_DEFAULT = new Set([
     "anthropic-subscription.ts",
     "session-tags.ts",
     "ask-someone.ts",
+    "foreman.ts",
 ]);
 const TITLES: Record<string, string> = {
     "prompt.ts": "System prompt",
@@ -104,6 +106,7 @@ const TITLES: Record<string, string> = {
     "updates.ts": "Pi Pocket updates",
     "design.ts": "Design",
     "tool-search.ts": "Tool search",
+    "foreman.ts": "Foreman supervision",
 };
 
 /**
@@ -602,6 +605,14 @@ export class ExtensionLoader {
         return [...this.#installed.values()].flat().map((extension) => extension.name);
     }
 
+    defaultExtensionNames(): string[] {
+        return this.#registry
+            .snapshot()
+            .installed()
+            .filter((extension) => extension.name !== "pocket-pip" && extension.name !== "foreman")
+            .map((extension) => extension.name);
+    }
+
     async #load(file: string, cacheBust: boolean, until?: number): Promise<Extension[]> {
         const module = this.#module(file);
 
@@ -628,6 +639,29 @@ export class ExtensionLoader {
             if (!(error instanceof Overtaken) && !this.#isLatest(file, generation)) {
                 throw new Overtaken(file);
             }
+
+            throw error;
+        }
+    }
+
+    async loadCoreModule(file: string, factory: (web: ExtensionWeb) => Extension): Promise<void> {
+        const module = this.#module(file);
+
+        if (module === undefined || module.source !== "built-in") {
+            throw new Error(`There is no built-in extension module ${file}`);
+        }
+
+        const { part, web } = this.#webs.stage(file, module.directory, titleOf(file));
+
+        try {
+            const extension = factory(web);
+
+            this.#webs.check(part);
+            this.#replace([extension], this.#installed.get(file) ?? []);
+            this.#installed.set(file, [extension]);
+            this.#webs.commit(part, declared(extension).tools);
+        } catch (error) {
+            this.#webs.discard(part);
 
             throw error;
         }
