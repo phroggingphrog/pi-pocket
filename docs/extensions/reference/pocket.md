@@ -1203,14 +1203,14 @@ What shows comes in layers, the last one wins: each item's default place, then t
 | Slot       | Ids, in their default order                                                                                                                                        | Fixed                                                                          | Modules' items go           |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ | --------------------------- |
 | `topbar`   | `core:subagents`, `core:changes`, `core:peeks`, `core:files`, `core:browser`, `core:artifacts`, `core:people`, `core:menu`                                         | `core:menu`, last                                                              | after `core:browser`        |
-| `status`   | `core:connection`, `core:here`, `core:speed`, `core:context`, `core:cache`, `core:spend`, `core:background`, `core:guard`                                          | `core:connection`, `core:guard`                                                | after `core:cache`          |
+| `status`   | `core:connection`, `core:here`, `core:speed`, `core:context`, `core:spend`, `core:background`, `core:guard`                                                        | `core:connection`, `core:guard`                                                | after `core:context`        |
 | `places`   | `core:files`, `core:changes`, `core:browser`, `core:artifacts`, `core:chat`, `core:find`, `core:launcher` (touch screens), `core:branch`, `core:pip`, `core:peeks` | none                                                                           | last: a tile for each panel |
 | `composer` | `core:places`, `core:attach`, `core:model`, `core:plan`                                                                                                            | none (Send, Stop, the mic, and Steer, Queue and Interrupt are not in the slot) | after `core:plan`           |
 | `reply`    | `core:time`, `core:react`, `core:discuss`, `core:pin`, `core:copy`, `core:more`                                                                                    | `core:more`, last                                                              | before `core:more`          |
 
 The `core:time` item shows a completed reply's stored message time. Appearance → Layout can hide or move it.
 
-An item that has nothing to show now shows nothing, wherever it is: Changes with no changes, the cache before the first answer, a quiet button.
+An item that has nothing to show now shows nothing, wherever it is: Changes with no changes, a quiet button.
 
 ### `PageProps`
 

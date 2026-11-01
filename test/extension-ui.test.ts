@@ -333,6 +333,11 @@ test(
     async () => {
         await page.navigate(`${base}/s/${session}`);
         await until(() => has('[data-part="status-item"]'), "the meter's status item");
+        assert.equal(
+            await has(".status-line .cache"),
+            false,
+            "cache usage is not displayed in the status line",
+        );
         assert.equal(await text('[data-part="status-item"] .long'), "46W · 74° · 95%");
         // The module put its item first and hid the spend; the person's own choice brings the spend back.
         const line = () =>
@@ -341,6 +346,7 @@ test(
             );
 
         assert.match(await line(), /^46W · 74° · 95% 1 here/);
+        assert.doesNotMatch(await line(), /cache\s*\d/i);
         assert.doesNotMatch(await line(), /\$0\.00/);
         await inPage(
             `(await import("/slots.js")).setShown("status", "core:spend", true); return "null";`,
