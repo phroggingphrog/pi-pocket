@@ -14,7 +14,7 @@ git log --graph --decorate --oneline -20 origin/main
 git tag --list 'v*' --sort=-version:refname
 ```
 
-Select an already verified commit that is an ancestor of owner-fork `main`. Pick a new version. The package version must match the new tag. Use a branch for release metadata. Keep the current commits intact.
+Select an already verified commit from a branch in the owner fork. The workflow checks that the commit is present in an owner-fork branch. Pick a new version. The package version must match the new tag. Use a branch for release metadata. Keep the current commits intact.
 
 ```bash
 git switch -c release/v0.28.0 <verified-commit>
@@ -32,7 +32,7 @@ Review the package version and lock file. Commit the release metadata. Merge thi
 
 Open the owner fork in GitHub. Choose **Actions → Manual fork release → Run workflow**. Enter the new tag, the exact 40-character revision SHA, and `publish` in the confirmation field.
 
-The workflow checks the owner repository, the commit, its ancestry from owner-fork `main`, the package version, the clean checkout, and the unused tag. It installs locked dependencies and runs checks, lint, and tests. It creates a source archive and an npm tarball. It calculates SHA256 checksums and writes a manifest with the repository, tag, commit, version, asset names, sizes, and hashes. It verifies the hashes before it creates a release in the owner fork.
+The workflow checks the owner repository, the exact commit, that an owner-fork branch contains the commit, the package version, the clean checkout, and the unused tag. It installs locked dependencies and runs checks, lint, and tests. It creates a source archive and an npm tarball. It calculates SHA256 checksums and writes a manifest with the repository, tag, commit, version, asset names, sizes, and hashes. It verifies the hashes before it creates a release in the owner fork.
 
 This workflow is manual only. It does not modify the default branch. It does not push a branch or merge a PR. It does not publish to npm. It does not change the live updater source or restart any service. GitHub creates the release tag at the exact requested revision.
 
