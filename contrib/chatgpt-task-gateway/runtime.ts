@@ -5,11 +5,42 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { z } from "zod/v4";
 import type { GatewayConfig } from "./gateway.ts";
 import type { PocketOAuthProvider } from "./oauth.ts";
+import { isAbsolute, relative, resolve, sep } from "node:path";
+import { realpath, stat } from "node:fs/promises";
 
 const MAX_PAGE = 100;
 const MAX_RESULT_BYTES = 48_000;
+const MAX_TASK_OUTPUT = 20_000;
 
 type Auth = { token: string; clientId: string; extra?: { owner?: string }; scopes: string[] };
+
+async function isAllowedPath(rootValue: string, supplied: string): Promise<boolean> {
+    if (!supplied || supplied.includes("\\0") || supplied.includes("\\\\")) {
+        return false;
+    }
+
+    const root = await realpath(rootValue);
+    const candidate = resolve(root, supplied);
+
+    if (isAbsolute(supplied) || !inside(root, candidate) || candidate === root) {
+        return false;
+    }
+
+    try {
+        const canonical = await realpath(candidate);
+        const info = await stat(canonical);
+
+        return info.isDirectory() && inside(root, canonical);
+    } catch {
+        return false;
+    }
+}
+
+function inside(root: string, candidate: string) {
+    const path = relative(root, candidate);
+
+    return path !== "" && path !== ".." && !path.startsWith(`..${sep}`);
+}
 
 export class PocketTaskGateway {
     readonly #config: GatewayConfig;
@@ -208,6 +239,22 @@ export class PocketTaskGateway {
     }
 
     async #call(owner: string, operation: string, args: Record<string, unknown>) {
+        if (
+            operation === "submit" &&
+            typeof args.prompt === "string" &&
+            args.prompt.length > MAX_TASK_OUTPUT
+        ) {
+            throw new Error("Task prompt exceeds the size limit.");
+        }
+
+        if (
+            operation === "submit" &&
+            typeof args.repositoryPath === "string" &&
+            !(await isAllowedPath(this.#config.workspaceRoot, args.repositoryPath))
+        ) {
+            throw new Error("Repository path is outside the configured workspace root.");
+        }
+
         const path = `/api/x/chatgpt-gateway/gateway/${encodeURIComponent(this.#config.sourceConversationId)}/${operation}`;
         const controller = new AbortController(),
             timer = setTimeout(() => controller.abort(), 10_000);

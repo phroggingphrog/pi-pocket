@@ -26,7 +26,7 @@ The owner explicitly authorized a disposable local instance. The tests use tempo
 
 Copy `.env.example` to `.env`. Set the local owner token, owner ID, workspace path, bridge token, OAuth client secret, approval secret, state path, and a disposable source session. Set `GATEWAY_ENABLED=true` only for a disposable local test. Keep `.env` private and out of source control. The example file contains placeholders only.
 
-The owner must turn on `chatgpt-gateway.ts` in Pi Pocket's Extensions settings. Its `enabled` setting defaults to `false`. The bridge binds to loopback and must remain local.
+The owner must turn on `chatgpt-gateway.ts` in Pi Pocket's Extensions settings. Its `enabled` setting defaults to `false`. The bridge binds to loopback and must remain local. The sidecar checks the owner and source session at startup. It refuses an invalid source session, a non-owner credential, a short bridge token, and a shared port.
 
 ## ChatGPT reachability
 

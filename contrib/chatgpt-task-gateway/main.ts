@@ -40,6 +40,16 @@ if (
 
 const store = await StateStore.open(config.statePath);
 const resource = `${config.publicUrl}/mcp`;
+const sourceSession = config.sourceConversationId;
+
+if (!/^[1-9]\d*$/.test(sourceSession)) {
+    throw new Error("GATEWAY_SOURCE_SESSION must be a positive session id.");
+}
+
+if (!config.bridgeToken || config.bridgeToken.length < 24) {
+    throw new Error("PI_POCKET_CHATGPT_BRIDGE_TOKEN must contain at least 24 characters.");
+}
+
 const oauth = new PocketOAuthProvider({
     store,
     clientId: config.clientId,
@@ -63,6 +73,23 @@ if (!owner || owner.role !== "owner" || owner.id !== config.ownerId) {
     await pocket.close();
 
     throw new Error("The Pocket credential does not match the configured owner.");
+}
+
+if (Number(env.PI_POCKET_PORT ?? 8788) === config.port) {
+    await pocket.close();
+
+    throw new Error("Pocket test API and MCP gateway must use different ports.");
+}
+
+const sourceMeta = pocket.sessionMeta(Number(sourceSession) as never);
+const sourceOwner = sourceMeta?.linkedFrom
+    ? pocket.sessionCatalogue()[String(sourceMeta.linkedFrom.id)]?.createdBy
+    : sourceMeta?.createdBy;
+
+if (!sourceMeta || sourceOwner !== owner.id) {
+    await pocket.close();
+
+    throw new Error("GATEWAY_SOURCE_SESSION must belong to the configured owner.");
 }
 
 const runtime = new PocketTaskGateway(config, oauth);
