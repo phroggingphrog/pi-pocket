@@ -21,7 +21,6 @@ import {
     readOutcome,
     readPending,
     rollBackUpdate,
-    stopMeansRollBack,
     undoPartialSwitch,
     updatePaths,
     writePending,
@@ -37,12 +36,12 @@ import {
     pickNpmVersion,
     type Release,
     repositoryProblem,
+    repositoryOf,
+    githubRepository,
     Updates,
     type UpdatesOptions,
-    type UpdateStatus,
 } from "../src/server/updates.ts";
 import { atLeast, compareReleases, versionParts } from "../src/server/versions.ts";
-import { installsByItself } from "../src/server/extensions/updates.ts";
 
 const root = mkdtempSync(join(tmpdir(), "pi-pocket-updates-"));
 
@@ -864,62 +863,33 @@ test("a server that starts on an update stopped part way puts it back, without r
     assert.equal(readFileSync(join(app, "code.txt"), "utf8"), "code of 1.0.0\n");
 });
 
-test("the install by itself takes only a release that needs no question, and the launcher goes back only for the version's fault", () => {
-    const ready = {
-        version: "1.0.0",
-        installKind: "git",
-        repository: "x",
-        beta: false,
-        available: true,
-        blockers: [],
-        cautions: [],
-        packages: false,
-        busy: 0,
-        supervised: true,
-        rollback: true,
-        latest: releaseOf("1.1.0"),
-    } satisfies UpdateStatus;
+test("a package selects its explicit release source without changing upstream provenance", () => {
+    const dir = join(root, `repository-${++made}`);
 
-    assert.equal(installsByItself(ready), true);
-    assert.equal(installsByItself({ ...ready, busy: 1 }), false, "someone at work");
-    assert.equal(installsByItself({ ...ready, blockers: ["no"] }), false);
-    assert.equal(
-        installsByItself({ ...ready, rollback: false }),
-        false,
-        "a launcher that cannot go back",
-    );
-    assert.equal(installsByItself({ ...ready, step: "Checking" }), false);
-    assert.equal(
-        installsByItself({
-            ...ready,
-            latest: releaseOf("1.1.0", { notes: "> [!WARNING]\n> One way." }),
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(
+        join(dir, "package.json"),
+        JSON.stringify({
+            repository: { url: "git+https://github.com/phroggingphrog/pi-pocket.git" },
         }),
-        false,
     );
-    assert.equal(
-        installsByItself({ ...ready, latest: { ...releaseOf("1.1.0"), notes: undefined } }),
-        false,
-        "no notes to read a warning in",
+    assert.equal(repositoryOf(dir), "https://github.com/phroggingphrog/pi-pocket.git");
+    assert.deepEqual(githubRepository(repositoryOf(dir)), {
+        owner: "phroggingphrog",
+        name: "pi-pocket",
+    });
+    const upstream = join(root, `upstream-${++made}`);
+
+    mkdirSync(upstream, { recursive: true });
+    writeFileSync(
+        join(upstream, "package.json"),
+        JSON.stringify({ repository: { url: "git+https://github.com/TannerMidd/pi-pocket.git" } }),
     );
-    const failed = {
-        v: 1 as const,
-        id: "x",
-        ok: false,
-        tag: "v1.1.0",
-        fromVersion: "1.0.0",
-        toVersion: "1.1.0",
-        message: "",
-        at: 0,
-    };
-
-    assert.equal(installsByItself({ ...ready, last: failed }), false, "it failed before");
-    assert.equal(installsByItself({ ...ready, last: { ...failed, toVersion: "1.0.5" } }), true);
-
-    assert.equal(stopMeansRollBack(false, 1), true);
-    assert.equal(stopMeansRollBack(false, null), true, "killed by a signal");
-    assert.equal(stopMeansRollBack(false, 75), false, "a restart it asked for");
-    assert.equal(stopMeansRollBack(false, 78), false, "a port it cannot listen on");
-    assert.equal(stopMeansRollBack(true, 1), false, "it was ready: a crash after is not the start");
+    assert.equal(repositoryOf(upstream), "https://github.com/TannerMidd/pi-pocket.git");
+    assert.deepEqual(githubRepository(repositoryOf(upstream)), {
+        owner: "TannerMidd",
+        name: "pi-pocket",
+    });
 });
 
 test("a checkout that writes CRLF line endings does not make git's own files look like the owner's", async () => {
