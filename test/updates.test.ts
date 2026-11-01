@@ -46,7 +46,7 @@ import { installsByItself } from "../src/server/extensions/updates.ts";
 
 const root = mkdtempSync(join(tmpdir(), "pi-pocket-updates-"));
 
-// Isolate npm 11 policy from the developer's user-level allowScripts setting.
+// Lock fixtures install no packages. Isolate npm 11 policy and disable lifecycle scripts.
 const npmrc = join(root, "npmrc");
 
 writeFileSync(npmrc, "");
