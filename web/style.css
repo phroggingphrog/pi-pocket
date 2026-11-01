@@ -3990,8 +3990,7 @@ pre.diff .del {
     cursor: default;
 }
 
-/* Under the message box: who is here, how fast the last answer came, the context, the cache, the spend, and Lancet
- * Guard. Its numbers are in mono. */
+/* Under the message box: who is here, how fast the last answer came, the context, the spend, and Lancet Guard. Its numbers are in mono. */
 .status-line {
     display: flex;
     flex-wrap: wrap;
@@ -4082,7 +4081,6 @@ pre.diff .del {
 .status-line[data-short~="here"] .here.alone,
 .status-line[data-short~="guard"] .guard .word,
 .status-line[data-short~="guard"] .background-now .word,
-.status-line[data-short~="cache"] .cache,
 .status-line[data-short~="wait"] .speed .wait,
 .status-line[data-short~="wait"] .speed.wait-only {
     display: none;

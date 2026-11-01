@@ -1,5 +1,5 @@
 // Slots: places in the app built from named items, the app's own and extensions' alike, in one order that a person and
-// extensions can change. The app's items have `core:` names (`core:files`, `core:cache`), extensions' `ext:<module>:<id>`.
+// extensions can change. The app's items have `core:` names (`core:files`), extensions' `ext:<module>:<id>`.
 // What shows, and where, comes in layers: each item's default place, then where an extension asked to put its own item
 // (`before`, `after`), then what extensions arranged (`pocket.arrange`), then this browser's person's own choices
 // (Appearance → Layout), which win. Fixed items (the menu, Lancet Guard) always show, in their own place.

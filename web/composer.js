@@ -1712,10 +1712,9 @@ function PlacesButton() {
 
 /**
  * The status line's shorter forms, in the order a narrow line takes them until it fits on one row: shorter words and
- * gaps, no "1 here" while you are alone, extensions' items' short forms, the guard's and the context's labels, then the
- * cache, then the wait for the first token.
+ * gaps, no "1 here" while you are alone, extensions' items' short forms, the guard's and the context's labels, then the wait for the first token.
  */
-const SHORTER = ["words", "here", "ext", "guard", "context", "cache", "wait"];
+const SHORTER = ["words", "here", "ext", "guard", "context", "wait"];
 /** What each status line was last fitted for: its text. Its width is the observer's to watch. */
 const fitted = new WeakMap();
 
@@ -1931,22 +1930,6 @@ defineItem("status", {
 
         return fill && contextTitle(fill);
     },
-});
-
-const cacheRate = () => store.state.view.stats?.cacheRate;
-
-defineItem("status", {
-    id: "core:cache",
-    label: "Cache",
-    order: 400,
-    render: () =>
-        cacheRate() !== undefined &&
-        html`<span class="cache">
-            cache <span class="num">${Math.round(cacheRate() * 100)}%</span>
-        </span>`,
-    detail: () =>
-        cacheRate() !== undefined &&
-        `${Math.round(cacheRate() * 100)}% of the input came from the cache`,
 });
 
 /**
