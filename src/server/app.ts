@@ -99,6 +99,7 @@ import { createPublicFetch } from "./public-fetch.ts";
 import { PiSessions } from "./pi-sessions.ts";
 import { Hooks } from "./hooks.ts";
 import { Pip, PIP_EXTENSION } from "./pip.ts";
+import { ForemanControl } from "./extensions/foreman.ts";
 import { PIP_COMPACT_CHOICES, PipCompaction } from "./pip-compact.ts";
 import { RepoWatches } from "./repo-watches.ts";
 import { snippet } from "./projection.ts";
@@ -786,6 +787,8 @@ export class PocketApp {
         const host: PocketHost = {
             guard: this.guard,
             approvals: this.approvals,
+            durableHarness: () => this.harness,
+            defaultExtensionNames: () => this.loader?.defaultExtensionNames() ?? [],
             agentDir: getAgentDir(),
             dataDir: this.dataDir,
             pocketVersion: pocketVersion(),
@@ -898,7 +901,7 @@ export class PocketApp {
             {
                 models: this.models,
                 registry,
-                settings: this.#harnessSettings(),
+                settings: () => this.#harnessSettings(),
                 now: this.now,
                 env: ({ conversationId, cwd }) =>
                     this.#wrapped(conversationId, cwd ?? this.defaultCwd),
@@ -915,6 +918,22 @@ export class PocketApp {
 
         this.#openingStorage = undefined;
         const conversations = await this.#recover(storage);
+        const { default: createForeman } = await import("./extensions/foreman.ts");
+
+        await this.loader.loadCoreModule("foreman.ts", (web) => createForeman(host, web));
+        await this.harness.commit(async (tx) => {
+            for (const conversation of conversations) {
+                await tx.doc(ForemanControl, conversation);
+                const agent = await tx.doc(AgentDoc, conversation);
+
+                if (agent.extensions === undefined) {
+                    agent.extensions = {
+                        add: this.loader.defaultExtensionNames(),
+                        remove: ["foreman"],
+                    };
+                }
+            }
+        }, context);
 
         await this.spend.load(conversations);
 
@@ -1320,7 +1339,10 @@ export class PocketApp {
                 return registry()
                     ?.snapshot()
                     .installed()
-                    .filter((extension) => extension.name !== PIP_EXTENSION);
+                    .filter(
+                        (extension) =>
+                            extension.name !== PIP_EXTENSION && extension.name !== "foreman",
+                    );
             },
             get stream() {
                 return stream();

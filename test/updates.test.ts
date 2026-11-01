@@ -46,7 +46,7 @@ import { installsByItself } from "../src/server/extensions/updates.ts";
 
 const root = mkdtempSync(join(tmpdir(), "pi-pocket-updates-"));
 
-// These lock-file fixtures install no packages. Isolate npm policy and disable lifecycle scripts.
+// Lock fixtures install no packages. Isolate npm 11 policy and disable lifecycle scripts.
 const npmrc = join(root, "npmrc");
 
 writeFileSync(npmrc, "");
@@ -70,6 +70,8 @@ const run = (cwd: string, args: string[]) =>
             GIT_COMMITTER_EMAIL: "test@example.com",
             GIT_CONFIG_NOSYSTEM: "1",
             HOME: root,
+            npm_config_userconfig: npmrc,
+            npm_config_allow_scripts: "",
             npm_config_ignore_scripts: "true",
         },
     }).trim();
@@ -840,7 +842,7 @@ test("a lock git left behind ends the update with words for the owner, rather th
     assert.match(said, /Fix the checkout by hand/);
     assert.equal(readPending(app), undefined);
     assert.equal(rollBackUpdate(app), undefined);
-    rmSync(join(app, ".git", "index.lock"));
+    rmSync(join(app, ".git", "index.lock"), { force: true });
 });
 
 test("a server that starts on an update stopped part way puts it back, without reloads, and restarts", async () => {

@@ -73,7 +73,9 @@ type Internal =
     | "background"
     | "goals"
     | "browsers"
-    | "memory";
+    | "memory"
+    | "durableHarness"
+    | "defaultExtensionNames";
 
 type PublicHost = Pick<PocketHost, keyof Host>;
 

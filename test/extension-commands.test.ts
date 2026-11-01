@@ -180,7 +180,9 @@ test("a failed reload keeps the commands, and turning the module off takes them 
     await app.setExtensionEnabled(owner(app), FILE, false);
     // The built-in Design module has a command of its own: what the drop-in had is gone.
     assert.deepEqual(
-        app.webs.commands().filter((each) => each.name !== "design-open"),
+        app.webs
+            .commands()
+            .filter((each) => each.name !== "design-open" && each.name !== "foreman-session"),
         [],
     );
 
