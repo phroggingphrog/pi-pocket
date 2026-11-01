@@ -221,13 +221,16 @@ function PlacesGrid({ changes = null }) {
 
     return html`<nav class="places" aria-label="Places">
         ${slotItems("places", { changes }).map(({ node }) => node)}
-        ${sessionActions.map((entry) => html`<${PlaceTile} key=${entry.key} place=${{
-            id: `ext:${entry.key}`,
-            label: entry.label,
-            icon: "grid",
-            badge: entry.hint,
-            run: entry.run,
-        }} />`)}
+        ${sessionActions.map(
+            (entry) =>
+                html`<${PlaceTile} key=${entry.key} place=${{
+                    id: `ext:${entry.key}`,
+                    label: entry.label,
+                    icon: "grid",
+                    badge: entry.hint,
+                    run: entry.run,
+                }} />`,
+        )}
     </nav>`;
 }
 

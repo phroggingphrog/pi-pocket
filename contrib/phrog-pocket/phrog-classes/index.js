@@ -188,7 +188,11 @@ export default function setup(pocket) {
                     if (active) {
                         setData(value);
                         setDrafts(value.prompts ?? {});
-                        setCurrentClass(value.selected ? value.classes[value.selected]?.name ?? value.selected : "Unassigned");
+                        setCurrentClass(
+                            value.selected
+                                ? (value.classes[value.selected]?.name ?? value.selected)
+                                : "Unassigned",
+                        );
                     }
                 },
                 (failure) => {
@@ -214,7 +218,9 @@ export default function setup(pocket) {
 
                 if (pocket.conversationId() === id) {
                     setData((previous) => ({ ...previous, selected }));
-                    setCurrentClass(selected ? data.classes[selected]?.name ?? selected : "Unassigned");
+                    setCurrentClass(
+                        selected ? (data.classes[selected]?.name ?? selected) : "Unassigned",
+                    );
                     setSaved(
                         answer.narrowed === false
                             ? "Class saved. Its tool list could not be narrowed; every call outside the class is still blocked."
@@ -273,15 +279,24 @@ export default function setup(pocket) {
         }
 
         if (id === null) {
-            return html`<div class="guild">${style}<p>Open a session to see its class.</p></div>`;
+            return html`<div class="guild">
+                ${style}
+                <p>Open a session to see its class.</p>
+            </div>`;
         }
 
         if (error && !data) {
-            return html`<div class="guild">${style}<p class="guild-error" role="alert">${error}</p></div>`;
+            return html`<div class="guild">
+                ${style}
+                <p class="guild-error" role="alert">${error}</p>
+            </div>`;
         }
 
         if (!data) {
-            return html`<div class="guild">${style}<p class="guild-status" role="status">Loading the guild…</p></div>`;
+            return html`<div class="guild">
+                ${style}
+                <p class="guild-status" role="status">Loading the guild…</p>
+            </div>`;
         }
 
         const chosen = data.selected ? data.classes[data.selected] : null;
@@ -333,35 +348,42 @@ export default function setup(pocket) {
                                       <dd>none</dd>
                                   </div>
                               </dl>
-                <div class="guild-picker" role="group" aria-label="Classes">
-                    ${Object.entries(data.classes).map(([key, each]) => {
-                        const active = data.selected === key;
+                              <div class="guild-picker" role="group" aria-label="Classes">
+                                  ${Object.entries(data.classes).map(([key, each]) => {
+                                      const active = data.selected === key;
 
-                        return html`
-                            <div class="guild-class" key=${key} data-active=${String(active)}>
-                                <div class="guild-class-text">
-                                    <strong>${each.name}</strong>
-                                    <span class="guild-small">${each.summary}</span>
-                                    <span class="guild-small"
-                                        >${each.tools.length} tools · ${each.mcpServers.length} servers ·
-                                        bank ${each.bank}</span
-                                    >
-                                </div>
-                                <button
-                                    class="guild-button"
-                                    data-primary=${String(active)}
-                                    disabled=${saving || active}
-                                    aria-label=${active
-                                        ? `${each.name}, active class`
-                                        : `Switch this session to ${each.name}`}
-                                    onClick=${() => select(key)}
-                                >
-                                    ${active ? "Active" : "Choose"}
-                                </button>
-                            </div>
-                        `;
-                    })}
-                </div>
+                                      return html`
+                                          <div
+                                              class="guild-class"
+                                              key=${key}
+                                              data-active=${String(active)}
+                                          >
+                                              <div class="guild-class-text">
+                                                  <strong>${each.name}</strong>
+                                                  <span class="guild-small">${each.summary}</span>
+                                                  <span class="guild-small"
+                                                      >${each.tools.length} tools ·
+                                                      ${each.mcpServers.length} servers · bank
+                                                      ${each.bank}</span
+                                                  >
+                                              </div>
+                                              <button
+                                                  class="guild-button"
+                                                  data-primary=${String(active)}
+                                                  disabled=${saving || active}
+                                                  aria-label=${
+                                                      active
+                                                          ? `${each.name}, active class`
+                                                          : `Switch this session to ${each.name}`
+                                                  }
+                                                  onClick=${() => select(key)}
+                                              >
+                                                  ${active ? "Active" : "Choose"}
+                                              </button>
+                                          </div>
+                                      `;
+                                  })}
+                              </div>
                               <p class="guild-note">${memory}</p>
                               <details class="guild-details">
                                   <summary>Tools (${chosen.tools.length})</summary>
@@ -373,31 +395,38 @@ export default function setup(pocket) {
                                   <summary>MCP servers (${chosen.mcpServers.length})</summary>
                                   ${
                                       chosen.mcpServers.length === 0
-                                          ? html`<p class="guild-small">This class uses no MCP server.</p>`
+                                          ? html`<p class="guild-small">
+                                                This class uses no MCP server.
+                                            </p>`
                                           : html`<ul>
                                                 ${chosen.mcpServers.map(
-                                                    (server) => html`<li key=${server}>${server}</li>`,
+                                                    (server) =>
+                                                        html`<li key=${server}>${server}</li>`,
                                                 )}
                                             </ul>`
                                   }
                                   <p class="guild-small">
-                                      A server works only while it is connected in the app's MCP page.
+                                      A server works only while it is connected in the app's MCP
+                                      page.
                                   </p>
                               </details>
                               <details class="guild-details">
                                   <summary>
-                                      Class lessons (${(data.memory ?? []).length} of ${data.limits?.notes ?? 40})
+                                      Class lessons (${(data.memory ?? []).length} of
+                                      ${data.limits?.notes ?? 40})
                                   </summary>
                                   ${
                                       (data.memory ?? []).length === 0
                                           ? html`<p class="guild-small">
-                                                Only this class reads these lessons. Pi distils them with
-                                                class_reflect and reads the fitting ones with class_recall;
-                                                the shared server context stays in Hindsight.
+                                                Only this class reads these lessons. Pi distils them
+                                                with class_reflect and reads the fitting ones with
+                                                class_recall; the shared server context stays in
+                                                Hindsight.
                                             </p>`
                                           : html`<ul>
                                                 ${data.memory.map(
-                                                    (note) => html`<li key=${note.id}>${note.text}</li>`,
+                                                    (note) =>
+                                                        html`<li key=${note.id}>${note.text}</li>`,
                                                 )}
                                             </ul>`
                                   }
@@ -452,8 +481,8 @@ export default function setup(pocket) {
                                   <span class="guild-eyebrow">No class</span>
                                   <h2>Unassigned</h2>
                                   <p class="guild-lead">
-                                      This session has every tool, as before. Choose a class to hold it
-                                      to one.
+                                      This session has every tool, as before. Choose a class to hold
+                                      it to one.
                                   </p>
                               </div>
                           `
@@ -473,16 +502,27 @@ export default function setup(pocket) {
         group: "session",
         sheet: "classes",
     });
+
     const refreshClassLabel = (id) => {
-        if (id === null) return;
+        if (id === null) {
+            return;
+        }
+
         pocket.api(`c/${id}/class`).then(
             (value) => {
-                const name = value.selected ? value.classes[value.selected]?.name ?? value.selected : "Unassigned";
-                mobileClass.update({ label: `Class · ${name}`, hint: `Current class: ${name} · Switch class` });
+                const name = value.selected
+                    ? (value.classes[value.selected]?.name ?? value.selected)
+                    : "Unassigned";
+
+                mobileClass.update({
+                    label: `Class · ${name}`,
+                    hint: `Current class: ${name} · Switch class`,
+                });
             },
             () => mobileClass.update({ label: "Class", hint: "Class unavailable · Switch class" }),
         );
     };
+
     pocket.onConversation(refreshClassLabel);
     refreshClassLabel(pocket.conversationId());
     pocket.menu({
