@@ -50,7 +50,9 @@ const gzip = createGzip({ level: 9, mtime: 0 });
 
 await pipeline(archiveProcess.stdout, gzip, createWriteStream(sourcePath));
 
-if (archiveProcess.exitCode !== 0) {throw new Error("Could not build the source archive.");}
+if (archiveProcess.exitCode !== 0) {
+    throw new Error("Could not build the source archive.");
+}
 
 const packRoot = mkdtempSync(join(output, ".pack-"));
 const sourceDirectory = mkdtempSync(join(output, ".source-"));
