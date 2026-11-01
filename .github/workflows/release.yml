@@ -8,7 +8,7 @@ on:
                 required: true
                 type: string
             revision:
-                description: "Exact owner-fork commit already on main"
+                description: "Exact 40-character owner-fork commit revision"
                 required: true
                 type: string
             confirm:
@@ -49,10 +49,15 @@ jobs:
               run: |
                   test "$GITHUB_REPOSITORY" = "phroggingphrog/pi-pocket"
                   test "$(git rev-parse HEAD)" = "$RELEASE_REVISION"
-                  git fetch origin main --quiet
-                  git merge-base --is-ancestor "$RELEASE_REVISION" origin/main
+                  git fetch origin --prune --quiet
+                  git cat-file -e "$RELEASE_REVISION^{commit}"
+                  if ! git branch -r --contains "$RELEASE_REVISION" | grep -q 'origin/'; then
+                    echo "Revision is not available in a branch on the owner fork."
+                    exit 1
+                  fi
                   test "v$(node -p 'require("./package.json").version')" = "$RELEASE_TAG"
                   test -z "$(git status --porcelain)"
+                  ! git show-ref --tags --verify --quiet "refs/tags/$RELEASE_TAG"
                   if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" >/dev/null 2>&1; then exit 1; fi
                   if gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" >/dev/null 2>&1; then exit 1; fi
 

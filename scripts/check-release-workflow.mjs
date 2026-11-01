@@ -6,7 +6,7 @@ const workflow = readFileSync(new URL("../.github/workflows/release.yml", import
 assert.match(workflow, /workflow_dispatch:/);
 assert.doesNotMatch(workflow, /^\s*(push|schedule):/m);
 assert.match(workflow, /github\.repository == 'phroggingphrog\/pi-pocket'/);
-assert.match(workflow, /git merge-base --is-ancestor/);
+assert.match(workflow, /git branch -r --contains/);
 assert.match(workflow, /npm run check/);
 assert.match(workflow, /npm run lint/);
 assert.match(workflow, /npm test/);
