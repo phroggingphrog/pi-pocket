@@ -481,6 +481,26 @@ Since 0.19.0 · Experimental
 
 Adds an action under Pi's answers, before More. Its `run` gets the answer, or its sheet gets it as the prop `reply`. See [`ReplyActionSpec`](#replyactionspec) and [`Reply`](#reply). The actions show under each finished answer, as the app's own (Discuss, Pin, Copy) do.
 
+### `messageAction`
+
+```ts
+messageAction(spec: ReplyActionSpec): Added<ReplyActionSpec>;
+```
+
+Since 0.26.0 · Experimental
+
+Adds an action to the native message menu for both person messages and assistant replies. A run receives a `Reply`; a sheet receives it as `reply`. The snapshot includes `kind` and, when available, `selectedText`. A person can select transcript text and open its message menu. The action never submits a message automatically.
+
+### `addAnnotation`
+
+```ts
+addAnnotation(note: { id: string; conversationId: number; source: { kind: "file" | "message"; path?: string; messageId?: string; range?: unknown }; snapshot: string; comment: string; sendText: string }): void;
+```
+
+Since 0.26.0 · Experimental
+
+Adds a reviewed annotation to the current conversation's composer. Drafts are local to the person and browser and survive reload. The composer shows expandable snapshots and removal controls. Sending a normal message appends each note's `sendText`; failed sends retain notes. Drafts do not synchronize across devices. Calls reject a different active conversation, unavailable steering, invalid snapshots, more than 12 notes, or more than 80,000 total send-text characters. Annotations cannot be submitted as shell or slash commands.
+
 ### `sessionChips`
 
 ```ts

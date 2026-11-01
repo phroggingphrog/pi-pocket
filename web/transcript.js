@@ -2931,6 +2931,39 @@ export function Transcript() {
     const keep = useRef(null);
     const counted = useRef(0);
     const [showJump, setShowJump] = useState(false);
+    const [selectedMessage, setSelectedMessage] = useState(null);
+
+    useEffect(() => {
+        const changed = () => {
+            const selection = getSelection();
+            const text = selection?.toString() ?? "";
+            const element = (node) => (node?.nodeType === 1 ? node : node?.parentElement);
+            const start = element(selection?.anchorNode)?.closest?.('[id^="entry-"]');
+            const end = element(selection?.focusNode)?.closest?.('[id^="entry-"]');
+            const id = start?.id.slice(6);
+            const entry = [...view.entries.values(), ...(history ?? [])].find(
+                (each) => String(each.id) === id,
+            );
+
+            if (
+                !text.trim() ||
+                text.length > 20000 ||
+                start !== end ||
+                !scroller.current?.contains(start) ||
+                !["user", "assistant"].includes(entry?.kind)
+            ) {
+                setSelectedMessage(null);
+
+                return;
+            }
+
+            setSelectedMessage({ entryId: entry.id, selectedText: text });
+        };
+
+        document.addEventListener("selectionchange", changed);
+
+        return () => document.removeEventListener("selectionchange", changed);
+    }, [view.entries, history, view.conversation?.id]);
     // Opened by a route on a phone, the scroller slides in with it: the column does not rise in as well, unless it comes
     // after the slide (a slow connection). Chosen as the column first draws, so a draw after does not start it.
     const entrance = useRef(null);
@@ -3268,6 +3301,18 @@ export function Transcript() {
         conversation.forkedFrom && sessions.find((each) => each.id === conversation.forkedFrom.id);
 
     return html`<main class="scroller" ref=${scroller} onScroll=${onScroll}>
+        ${
+            selectedMessage &&
+            canSteer() &&
+            html`<button
+            class="button selection-message-action"
+            onMouseDown=${(event) => event.preventDefault()}
+            onClick=${() => {
+                openSheet({ type: "message", ...selectedMessage });
+                setSelectedMessage(null);
+            }}
+        >Annotate selected text…</button>`
+        }
         <div class=${`transcript ${entrance.current}`} data-part="transcript" ref=${column}>
             <${LinkedSessions} />
             ${

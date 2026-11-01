@@ -1,0 +1,44 @@
+.annotation-sheet {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+}
+.annotation-sheet form {
+    display: grid;
+    gap: 6px;
+}
+.annotation-sheet label {
+    font-weight: 600;
+}
+.annotation-sheet textarea,
+.annotation-sheet input {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+}
+.annotation-row {
+    display: flex;
+    gap: 6px;
+}
+.annotation-row button,
+.annotation-sheet button {
+    min-height: 40px;
+}
+.annotation-source {
+    min-height: 180px;
+    max-height: 40vh;
+    resize: vertical;
+    white-space: pre;
+}
+.annotation-preview {
+    min-width: 0;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px;
+}
+.annotation-preview pre {
+    max-height: 25vh;
+    overflow: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}

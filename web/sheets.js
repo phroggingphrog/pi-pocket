@@ -353,7 +353,7 @@ function sheetBody(sheet) {
             break;
         case "message":
             body = view.conversation
-                ? html`<${MessageSheet} key=${sheet.entryId} entryId=${sheet.entryId} />`
+                ? html`<${MessageSheet} key=${sheet.entryId} entryId=${sheet.entryId} selectedText=${sheet.selectedText} />`
                 : null;
             break;
         case "reset":

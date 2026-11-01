@@ -76,6 +76,11 @@ export const SIDEBAR = [
             ["docs/features.md", "Features"],
             ["docs/releases.md", "Releases and betas"],
             ["docs/release-notes.md", "Release notes"],
+            ["docs/foreman-pilot.md", "Foreman adapter pilot"],
+            [
+                "docs/extensions/cache-conversation-features.md",
+                "Conversation annotations and cache diagnostics",
+            ],
         ],
     },
 ];

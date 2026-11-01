@@ -177,15 +177,17 @@ test("the gate opens at the canary's first content, not when its whole stream en
 
 const sharingLimit = {
     fail:
-        "The ChatGPT user has reached their Subscription Sharing usage limit. " +
+        "The ChatGPT user has reached subscription_sharing_usage_limit_exceeded. " +
         "Ask the user to try again after their usage limit resets or use an API key instead.",
 };
 
 test("unknown-reset OpenAI subscription limits share the full budget, not overload or try caps", async () => {
     const g = gate({
         hours: () => 3_000 / 3_600_000,
+        random: () => 0.5,
         tuning: {
             ...TUNING,
+            minWaitMs: 1,
             subscriptionBackoffMs: 30,
             maxBackoffMs: 10,
             maxTries: 1,
@@ -204,8 +206,11 @@ test("unknown-reset OpenAI subscription limits share the full budget, not overlo
 
         const other = ask(rt, "gpt-b", "openai");
 
+        await until(() => rt.calls.length === 2);
+        const pending = stops(first, other);
+
         assert.equal(g.gates()[0]!.key, "openai");
-        assert.deepEqual(await stops(first, other), ["stop", "stop"]);
+        assert.deepEqual(await pending, ["stop", "stop"]);
         assert.equal(rt.calls.length, 6);
     } finally {
         g.close();

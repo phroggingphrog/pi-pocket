@@ -194,11 +194,15 @@ export type KeeperDeps = {
     accountFor?: (conversationId: number) => WarmAccount | undefined;
     /** True turns the keeper off. Read at each decision. */
     disabled?: () => boolean;
+    /** Observe a settled refresh after its usage was recorded. */
+    refreshed?: (conversationId: number, message: AssistantMessage) => void;
 };
 
 export class CacheKeeper {
-    readonly #deps: Required<Omit<KeeperDeps, "conversationOf" | "isRunning" | "accountFor">> &
-        Pick<KeeperDeps, "conversationOf" | "isRunning" | "accountFor">;
+    readonly #deps: Required<
+        Omit<KeeperDeps, "conversationOf" | "isRunning" | "accountFor" | "refreshed">
+    > &
+        Pick<KeeperDeps, "conversationOf" | "isRunning" | "accountFor" | "refreshed">;
     readonly #entries = new Map<string, Entry>();
     readonly #requests = new Map<string, { conversationId?: number }>();
     readonly #pending = new Set<Promise<void>>();
@@ -548,6 +552,11 @@ export class CacheKeeper {
 
             // A request can cost money even when a new request or Stop superseded it.
             await entry.account?.recordUsage(message);
+
+            if (entry.conversationId !== undefined) {
+                this.#deps.refreshed?.(entry.conversationId, message);
+            }
+
             this.#warms++;
             this.#spent += message.usage.cost.total;
             entry.warms++;

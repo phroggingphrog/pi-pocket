@@ -108,6 +108,8 @@ import { BASE_THEME, Themes } from "./themes.ts";
 import { THEME_ID } from "./themes/format.ts";
 import { LimitGate, type LimitTuning } from "./limit-gate.ts";
 import { CacheKeeper } from "./cache-keeper.ts";
+import { CacheTelemetry, observation } from "./cache-telemetry.ts";
+import { randomUUID } from "node:crypto";
 import { measureModelStreams } from "./timing.ts";
 import { Providers } from "./providers.ts";
 import { PushStore } from "./push.ts";
@@ -339,6 +341,7 @@ export class PocketApp {
     readonly limits: LimitGate;
     /** Keeps the prompt cache warm while a run waits on a tool call (`cache-keeper.ts`). */
     readonly cacheKeeper: CacheKeeper;
+    #cacheTelemetry: CacheTelemetry | undefined;
     readonly schedules = new Schedules(this);
     /** Commands Pi runs in the background, watched until they end (`background.ts`). */
     readonly background = new BackgroundTasks(this);
@@ -467,6 +470,11 @@ export class PocketApp {
         this.#log = options.log ?? ((line) => console.log(line));
         this.cacheKeeper = new CacheKeeper({
             log: (line) => this.#log(line),
+            refreshed: (id, message) =>
+                this.#cacheTelemetry?.record(
+                    id as ConversationId,
+                    observation(randomUUID(), "refresh", message),
+                ),
             conversationOf: (sessionId) => this.#conversationOfSession(sessionId),
             isRunning: (conversationId) => this.#busy.has(conversationId as ConversationId),
             accountFor: (conversationId) => {
@@ -937,6 +945,7 @@ export class PocketApp {
 
         await this.spend.load(conversations);
 
+        this.#cacheTelemetry = new CacheTelemetry(this.harness, (line) => this.#log(line));
         this.#unsubscribeCommits = this.harness.subscribeCommits((publication) =>
             this.#committed(publication),
         );
@@ -1042,6 +1051,7 @@ export class PocketApp {
 
     /** Every commit, as Pi Durable publishes it: what the app keeps in memory follows it, and so do the open views. */
     #committed(publication: CommitPublication): void {
+        this.#cacheTelemetry?.committed(publication);
         let sessionsChanged = false;
         let alreadyPaid = false;
 
@@ -3614,6 +3624,7 @@ export class PocketApp {
             this.alerts.close();
             this.themes.close();
             await this.cacheKeeper.close();
+            await this.#cacheTelemetry?.close();
             this.spend.close();
             this.limits.close();
             this.background.close();

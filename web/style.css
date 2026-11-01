@@ -18566,6 +18566,52 @@ pre.gallery-code {
     }
 }
 
+.annotation-drafts {
+    padding: 8px;
+    border-bottom: 1px solid var(--line);
+    min-width: 0;
+}
+.annotation-draft {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    margin-bottom: 4px;
+    padding: 4px 8px;
+    overflow-wrap: anywhere;
+}
+.annotation-draft summary {
+    cursor: pointer;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+}
+.annotation-draft blockquote {
+    white-space: pre-wrap;
+    max-height: 240px;
+    overflow: auto;
+    border-left: 2px solid var(--accent);
+    padding-left: 8px;
+}
+.annotation-draft .button {
+    min-height: 40px;
+}
+.ext-message-action {
+    width: 100%;
+    min-height: 44px;
+    text-align: left;
+    padding: 10px 12px;
+}
+
+.selection-message-action {
+    position: sticky;
+    top: 8px;
+    z-index: 4;
+    display: block;
+    margin: 0 auto 8px;
+    min-height: 44px;
+    background: var(--card);
+    border: 1px solid var(--accent);
+}
+
 .quote-reply-button {
     position: fixed;
     z-index: 70;
