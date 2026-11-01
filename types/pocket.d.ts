@@ -242,6 +242,47 @@ export interface Host {
      * @experimental
      */
     readonly linkedSessions: LinkedSessions;
+    /** @since 0.28.0 @experimental */
+    readonly taskGateway: { abort(conversationId: ConversationId, userId: string): Promise<void> };
+    /** Reads one current server-side extension setting.
+     * @since 0.28.0
+     * @experimental
+     */
+    settingFor(module: string, name: string): unknown;
+    /** @since 0.28.0 @experimental */
+    conversation(
+        conversationId: ConversationId,
+    ): Promise<import("@earendil-works/pi-durable").Conversation>;
+    /** @since 0.28.0 @experimental */
+    sessionMeta(conversationId: ConversationId):
+        | {
+              createdBy?: string;
+              title?: string;
+              cwd: string;
+              createdAt: number;
+              updatedAt: number;
+              archived?: boolean;
+              linkedFrom?: { id: number };
+          }
+        | undefined;
+    /** @since 0.28.0 @experimental */
+    sessionCatalogue(): Readonly<
+        Record<
+            string,
+            {
+                createdBy?: string;
+                title?: string;
+                cwd: string;
+                createdAt: number;
+                updatedAt: number;
+            }
+        >
+    >;
+    /** Checks a directory with the workspace path rules.
+     * @since 0.28.0
+     * @experimental
+     */
+    workspace: { checkDirectory(path: string): string };
     /**
      * Makes text from other places safe for Pi to read.
      * @since 0.14.0
@@ -1316,6 +1357,16 @@ export interface Web {
         path: string,
         handle: WebHandler,
         options?: { access?: WebAccess },
+    ): void;
+    /**
+     * Adds an owner-only, session-bound route for a trusted local capability client.
+     * @since 0.28.0
+     * @experimental
+     */
+    internalServiceRoute(
+        method: WebMethod,
+        path: string,
+        handle: (request: ConversationWebRequest) => unknown,
     ): void;
     /**
      * Binds the path parameter named by options.conversation to a visible source before calling the handler.

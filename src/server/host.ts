@@ -463,6 +463,16 @@ export interface PocketHost {
      * @experimental In 0.14: it can change in a minor release (docs/extensions/policies/api-stability.md).
      */
     readonly linkedSessions: LinkedSessionsApi;
+    /** Owner-authorized controls for a session-scoped extension route. */
+    readonly taskGateway: { abort(conversationId: ConversationId, userId: string): Promise<void> };
+    settingFor(module: string, name: string): unknown;
+    /** Read a committed conversation entry page after an entry id. */
+    conversation(
+        conversationId: ConversationId,
+    ): Promise<import("@earendil-works/pi-durable").Conversation>;
+    sessionMeta(conversationId: ConversationId): import("./docs.ts").SessionMeta | undefined;
+    sessionCatalogue(): Readonly<Record<string, import("./docs.ts").SessionMeta>>;
+    workspace: { checkDirectory(path: string): string };
     /** Messages to Pi for later: the schedule tool sets up Pi's own. */
     readonly schedules: Pick<Schedules, "add" | "cancel" | "limits" | "list" | "task">;
     /** Commands Pi runs in the background: the background tool starts, reads, and stops them. */
@@ -679,6 +689,12 @@ export interface ExtensionWeb {
         path: string,
         handle: WebHandler,
         options?: { access?: WebAccess },
+    ): void;
+    /** Register an owner-only route for a trusted local capability client. The route remains session-scoped. */
+    internalServiceRoute(
+        method: WebMethod,
+        path: string,
+        handle: (request: ConversationWebRequest) => unknown,
     ): void;
     /** Bind a named path parameter to a conversation before calling the handler. */
     conversationRoute(

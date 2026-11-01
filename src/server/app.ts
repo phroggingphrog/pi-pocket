@@ -333,6 +333,17 @@ export class PocketApp {
     readonly commands = new Commands(this);
     readonly extensionCommands = new ExtensionCommands(this);
     readonly linkedSessions = new LinkedSessions(this);
+    readonly taskGateway = {
+        abort: async (conversationId: ConversationId, userId: string) => {
+            const user = this.config.userById(userId);
+
+            if (!user || user.role !== "owner") {
+                throw new HttpError(403, "Only the owner can stop this task.");
+            }
+
+            await this.commands.abort(conversationId, user);
+        },
+    };
     readonly collab = new Collab(this);
     readonly alerts = new Alerts(this);
     readonly providers = new Providers(this);
@@ -840,6 +851,22 @@ export class PocketApp {
             heldBack: (conversationId) => this.spend.heldBack(conversationId),
             onLimitsChanged: (listener) => this.spend.onLimitsChanged(listener),
             linkedSessions: this.linkedSessions,
+            settingFor: (module, name) => this.config.extensionSettings(module)[name],
+            taskGateway: {
+                abort: async (conversationId, userId) => {
+                    const user = this.config.userById(userId);
+
+                    if (!user || user.role !== "owner") {
+                        throw new HttpError(403, "Only the owner can stop this task.");
+                    }
+
+                    await this.commands.abort(conversationId, user);
+                },
+            },
+            conversation: async (conversationId) => this.conversation(conversationId),
+            sessionMeta: (conversationId) => this.sessionMeta(conversationId),
+            sessionCatalogue: () => this.sessionCatalogue(),
+            workspace: this.workspace,
             schedules: this.schedules,
             background: this.background,
             goals: this.goals,

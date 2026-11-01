@@ -73,7 +73,13 @@ type Internal =
     | "background"
     | "goals"
     | "browsers"
-    | "memory";
+    | "memory"
+    | "taskGateway"
+    | "conversation"
+    | "sessionMeta"
+    | "sessionCatalogue"
+    | "workspace"
+    | "settingFor";
 
 type PublicHost = Pick<PocketHost, keyof Host>;
 

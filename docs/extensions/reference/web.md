@@ -48,6 +48,16 @@ Adds a route at `/api/x/<module>/<path>`. `handle` answers its requests.
 
 [Routes](../routes.md) tells you about the checks that come before a handler, errors, and what to check in a handler.
 
+### `internalServiceRoute`
+
+```ts
+internalServiceRoute(method: WebMethod, path: string, handle: (request: ConversationWebRequest) => unknown): void;
+```
+
+Since 0.28.0 · Experimental
+
+Adds a route for a trusted local capability client. The route must contain a conversation parameter. Pi Pocket binds the request to that conversation and checks its access. Only the owner can use the route. The route does not appear in extension route metadata. It requires the normal sign-in and `X-Pocket` header. Do not use it for public calls. Check that the function exists before use on older servers.
+
 ### `conversationRoute`
 
 ```ts

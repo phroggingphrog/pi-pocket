@@ -1,0 +1,18 @@
+{
+    "name": "@pi-pocket/chatgpt-task-gateway",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "gateway": "node --experimental-strip-types main.ts",
+        "test": "node --experimental-strip-types --test *.test.ts"
+    },
+    "dependencies": {
+        "@modelcontextprotocol/sdk": "1.25.2",
+        "express": "5.1.0",
+        "jose": "6.1.1",
+        "zod": "4.1.12"
+    },
+    "devDependencies": {
+        "@types/express": "^5.0.3"
+    }
+}

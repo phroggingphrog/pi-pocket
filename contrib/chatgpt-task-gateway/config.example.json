@@ -1,0 +1,12 @@
+{
+    "bind": "127.0.0.1",
+    "port": 8787,
+    "mcpPath": "/mcp",
+    "resourceUrl": "https://replace-with-approved-host.example/mcp",
+    "issuerUrl": "https://replace-with-approved-host.example/",
+    "pocketApiUrl": "http://127.0.0.1:4000",
+    "workspaceRoot": "/tmp/pi-pocket-gateway-workspace",
+    "statePath": "/tmp/pi-pocket-gateway/state.json",
+    "oauthClientId": "replace-with-chatgpt-cimd-client-document-url",
+    "oauthClientSecret": "replace-with-a-secret"
+}

@@ -182,6 +182,16 @@ Since 0.27.0 · Experimental
 
 The role of a person by id: `"owner"`, `"guest"`, or `"viewer"`. It is `undefined` for an id that is not a person here. It reads the role that core uses, so a module does not keep its own copy. Use it with `requesterOf` to know if Pi works for the owner. It can change in a minor release. Check that it is there first: `host.roleOf?.(id)`.
 
+### `settingFor`
+
+```ts
+settingFor(module: string, name: string): unknown;
+```
+
+Since 0.28.0 · Experimental
+
+Reads the current server-side value of a module setting. It does not expose secret settings to the browser. Check that the function exists before use on older servers.
+
 ### `heldBack`
 
 ```ts
@@ -380,6 +390,58 @@ What `fetchPublic` takes besides the address.
 - `maxRedirects`: the redirects to follow at most.
 - `maxBytes`: the size of the body at most, after it is decoded.
 - `timeoutMs`: the time for the whole request at most, the body included.
+
+## Owner task bridge
+
+### `taskGateway`
+
+```ts
+readonly taskGateway: { abort(conversationId: ConversationId, userId: string): Promise<void> };
+```
+
+Since 0.28.0 · Experimental
+
+Stops a task session for the owner after the caller checks the owner identity. It does not answer or approve a human request. Use it only from the session-bound internal gateway route.
+
+### `conversation`
+
+```ts
+conversation(conversationId: ConversationId): Promise<Conversation>;
+```
+
+Since 0.28.0 · Experimental
+
+Reads the durable conversation handle for bounded transcript access. Check that the function exists before use on older servers.
+
+### `sessionMeta`
+
+```ts
+sessionMeta(conversationId: ConversationId): SessionMeta | undefined;
+```
+
+Since 0.28.0 · Experimental
+
+Reads the session catalogue record for owner and link checks. It does not grant session access.
+
+### `sessionCatalogue`
+
+```ts
+sessionCatalogue(): Readonly<Record<string, SessionMeta>>;
+```
+
+Since 0.28.0 · Experimental
+
+Reads the catalogue records that the gateway needs to verify source and task ownership. It grants no session access. Check that the function exists before use on older servers.
+
+### `workspace`
+
+```ts
+workspace: { checkDirectory(path: string): string };
+```
+
+Since 0.28.0 · Experimental
+
+Checks a directory with Pi Pocket path rules. It does not enforce a gateway workspace root. The gateway must apply that boundary too.
 
 ## Linked sessions
 

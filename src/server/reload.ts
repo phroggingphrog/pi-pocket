@@ -65,6 +65,7 @@ const ORDER = [
     "updates.ts",
     "design.ts",
     "tool-search.ts",
+    "chatgpt-gateway.ts",
 ];
 
 /** The built-in modules' names (their files' without `.ts`): a drop-in with one of them is never loaded. */
@@ -75,6 +76,7 @@ export const BUILT_IN_MODULES: ReadonlySet<string> = new Set(
 const REQUIRED = new Set(["prompt.ts"]);
 /** Built-in modules that stay off until the owner turns them on. Drop-ins all do. */
 const OFF_BY_DEFAULT = new Set([
+    "chatgpt-gateway.ts",
     "guard.ts",
     "agent-teams.ts",
     "anthropic-subscription.ts",

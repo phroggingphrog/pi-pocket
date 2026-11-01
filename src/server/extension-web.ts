@@ -166,7 +166,7 @@ function moduleName(file: string): string {
     return file.replace(/\.ts$/, "");
 }
 
-interface Route {
+export interface ExtensionRoute {
     method: WebMethod;
     /** The path as registered, for the Extensions sheet. */
     path: string;
@@ -174,6 +174,7 @@ interface Route {
     access: WebAccess;
     handle: WebHandler | ((request: ConversationWebRequest) => unknown);
     conversation?: string;
+    service?: boolean;
 }
 
 interface Client {
@@ -195,7 +196,7 @@ export class WebPart {
     readonly module: string;
     readonly title: string;
     readonly directory: string;
-    readonly routes: Route[] = [];
+    readonly routes: ExtensionRoute[] = [];
     client: Client | undefined;
     /** What draws the module's public pages (`web.publicPage`), for anyone with one of its links. */
     page: PublicPageHandler | undefined;
@@ -226,7 +227,7 @@ export class WebPart {
         this.title = title;
     }
 
-    /** Whether it added nothing to the app: no routes, browser module, public pages, or commands (cleanups do not count). */
+    /** Whether it added nothing to the app: no routes, browser module, public pages, settings, or commands. */
     get empty(): boolean {
         return (
             this.routes.length === 0 &&
@@ -241,7 +242,8 @@ export class WebPart {
 
 /** The routes a request to a module could mean. */
 export type RouteMatch =
-    { route: Route; part: WebPart; params: Record<string, string> } | { allow: WebMethod[] };
+    | { route: ExtensionRoute; part: WebPart; params: Record<string, string> }
+    | { allow: WebMethod[] };
 
 interface Options {
     /** Browser modules for the people `access` lets in changed: their tabs must hear which to load. */
@@ -305,6 +307,19 @@ export class ExtensionWebs {
             route: (method, path, handle, options) => {
                 open("route");
                 part.routes.push(checkRoute(part, method, path, handle, options?.access));
+            },
+            internalServiceRoute: (method, path, handle) => {
+                open("internalServiceRoute");
+                const route = checkRoute(part, method, path, handle, "owner");
+                const conversation = route.segments.find((segment) => segment.startsWith(":"));
+
+                if (!conversation) {
+                    throw new Error("Internal service routes must bind a session parameter.");
+                }
+
+                route.service = true;
+                route.conversation = conversation.slice(1);
+                part.routes.push(route);
             },
             conversationRoute: (method, path, handle, options) => {
                 open("conversationRoute");
@@ -823,7 +838,8 @@ export class ExtensionWebs {
         }
 
         const found = part.routes.flatMap((route) => {
-            const params = mayUse(user, route.access) ? matchPath(route.segments, path) : undefined;
+            const allowed = route.service ? user.role === "owner" : mayUse(user, route.access);
+            const params = allowed ? matchPath(route.segments, path) : undefined;
 
             return params === undefined ? [] : [{ route, params }];
         });
@@ -937,15 +953,20 @@ export class ExtensionWebs {
 
         // The widest of its routes' and its browser module's: who can reach any of it.
         const reach: WebAccess[] = [
-            ...part.routes.map((route) => route.access),
+            ...part.routes.filter((route) => !route.service).map((route) => route.access),
             ...(part.client === undefined ? [] : [part.client.access]),
         ];
         const access = (["view", "steer"] as const).find((each) => reach.includes(each)) ?? "owner";
 
         return {
-            routes: part.routes.map((route) => `${route.method} ${route.path}`),
+            routes: part.routes
+                .filter((route) => !route.service)
+                .map((route) => `${route.method} ${route.path}`),
             ...(part.client === undefined ? {} : { client: part.client.access }),
-            access,
+            access:
+                part.routes.some((route) => !route.service) || part.client !== undefined
+                    ? access
+                    : "owner",
             commands: part.commands.map((command) => `${command.scope} /${command.name}`),
             publicPage: part.page !== undefined,
             service: part.service !== undefined,
@@ -1174,7 +1195,7 @@ function checkRoute(
     path: unknown,
     handle: unknown,
     access: unknown = "owner",
-): Route {
+): ExtensionRoute {
     const verb = typeof method === "string" ? method.toUpperCase() : "";
 
     if (!METHODS.has(verb)) {
@@ -1319,7 +1340,7 @@ function safeDescribe(error: unknown): string {
 }
 
 /** How specific a route is, to sort by: a fixed part sorts before a `:name` part, from the left. */
-function specificity(route: Route): string {
+function specificity(route: ExtensionRoute): string {
     return route.segments.map((segment) => (segment.startsWith(":") ? "1" : "0")).join("");
 }
 

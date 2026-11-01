@@ -41,6 +41,14 @@ export async function extensionRoute(
 
     const { route, part, params } = match;
 
+    if (route.service && user.role !== "owner") {
+        throw new HttpError(404, "Unknown extension route");
+    }
+
+    if (route.service && !route.conversation) {
+        throw new HttpError(404, "Unknown extension route");
+    }
+
     // The path was decoded before it was split, so `..%2F` is a part `..`: a handler that makes a file's path of a
     // part must never get one that leads elsewhere.
     if (
@@ -66,6 +74,11 @@ export async function extensionRoute(
     }
 
     const id = source === undefined ? undefined : (Number(source) as unknown as ConversationId);
+
+    if (route.service && id === undefined) {
+        throw new HttpError(404, "Unknown extension route");
+    }
+
     const scope = new ExtensionRequest(app, user.id, route.access, id);
     const clientCancelled = new AbortController();
 
@@ -134,6 +147,10 @@ export async function extensionRoute(
                 })),
             ...bound,
         };
+
+        if (route.service && (current.role !== "owner" || id === undefined)) {
+            throw new HttpError(404, "Unknown extension route");
+        }
 
         result = await route.handle(input as ConversationWebRequest);
     } catch (error) {

@@ -46,6 +46,14 @@ import { installsByItself } from "../src/server/extensions/updates.ts";
 
 const root = mkdtempSync(join(tmpdir(), "pi-pocket-updates-"));
 
+// These lock-file fixtures install no packages. Isolate npm policy and disable lifecycle scripts.
+const npmrc = join(root, "npmrc");
+
+writeFileSync(npmrc, "");
+process.env.npm_config_userconfig = npmrc;
+delete process.env.npm_config_allow_scripts;
+process.env.npm_config_ignore_scripts = "true";
+
 after(() => rmSync(root, { recursive: true, force: true }));
 
 let made = 0;
@@ -62,6 +70,7 @@ const run = (cwd: string, args: string[]) =>
             GIT_COMMITTER_EMAIL: "test@example.com",
             GIT_CONFIG_NOSYSTEM: "1",
             HOME: root,
+            npm_config_ignore_scripts: "true",
         },
     }).trim();
 
@@ -602,7 +611,7 @@ test("git refusing to move the checkout ends the update cleanly, packages back a
         }),
         /failed/,
     );
-    rmSync(lock);
+    rmSync(lock, { force: true });
     assert.equal(run(app, ["rev-parse", "HEAD"]), first);
     assert.equal(readFileSync(join(app, "node_modules", "old.txt"), "utf8").length > 0, true);
     assert.equal(readPending(app), undefined);
